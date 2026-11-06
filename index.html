@@ -20,7 +20,12 @@
   #bar{height:100%;width:0%;background:#274263;border-radius:3px;transition:width .3s}
   #status{color:#3d5a7d;font:12px system-ui,sans-serif}
 </style>
-  <script type="module" crossorigin src="./assets/index-DvKAEO_w.js"></script>
+<script type="importmap">
+{"imports":{
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+}}
+</script>
 </head>
 <body>
 <div id="overlay">
@@ -28,8 +33,204 @@
   <div id="track"><div id="bar"></div></div>
   <div id="status">Loading campus…</div>
 </div>
-<div id="title"><h1>VIRTUAL ACADEMY</h1><p>Campus preview — building · gate · sign · grounds</p></div>
+<div id="title"><h1>VIRTUAL ACADEMY</h1><p>Campus preview — building · gate · sign · NPCs · grounds</p></div>
 <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
 <div id="hud"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+const SEED = 20261101;
+function mulberry32(a){return function(){a=(a+0x6d2b79f5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+const rand = mulberry32(SEED);
+
+const SKY = new THREE.Color(0x9ec8ee);
+const HORIZON = new THREE.Color(0xdfe9f2);
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = SKY;
+scene.fog = new THREE.Fog(HORIZON,120,380);
+
+const camera = new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,900);
+camera.position.set(30,17,82);
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,6,6);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI*0.495;
+controls.minDistance = 8;
+controls.maxDistance = 220;
+
+scene.add(new THREE.HemisphereLight(0xcfe4ff,0x6d7a52,0.85));
+const sun = new THREE.DirectionalLight(0xfff3e0,2.4);
+sun.position.set(45,60,30);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-70; sun.shadow.camera.right=70;
+sun.shadow.camera.top=70; sun.shadow.camera.bottom=-70;
+sun.shadow.camera.far=220; sun.shadow.bias=-0.0004;
+scene.add(sun);
+
+const lawn = new THREE.Mesh(new THREE.CircleGeometry(420,72).rotateX(-Math.PI/2),
+  new THREE.MeshStandardMaterial({color:0x5f8f4e,roughness:1}));
+lawn.receiveShadow = true;
+scene.add(lawn);
+
+const walkMat = new THREE.MeshStandardMaterial({color:0xcbb98f,roughness:0.95});
+const walk = new THREE.Mesh(new THREE.PlaneGeometry(6,44),walkMat);
+walk.rotation.x=-Math.PI/2; walk.position.set(0,0.02,34); walk.receiveShadow=true;
+scene.add(walk);
+const court = new THREE.Mesh(new THREE.CircleGeometry(13,48).rotateX(-Math.PI/2),walkMat);
+court.position.set(0,0.02,10); court.receiveShadow=true;
+scene.add(court);
+
+const farTrees = new THREE.Group();
+const farMat = new THREE.MeshStandardMaterial({color:0x4d7047,roughness:1});
+for(let i=0;i<60;i++){
+  const a=rand()*Math.PI*2, r=200+rand()*110, h=14+rand()*16;
+  const t=new THREE.Mesh(new THREE.ConeGeometry(6+rand()*5,h,7),farMat);
+  t.position.set(Math.cos(a)*r,h/2,Math.sin(a)*r);
+  farTrees.add(t);
+}
+scene.add(farTrees);
+
+const overlay=document.getElementById('overlay');
+const bar=document.getElementById('bar');
+const statusEl=document.getElementById('status');
+const manager=new THREE.LoadingManager();
+manager.onProgress=(url,loaded,total)=>{bar.style.width=`${Math.round(loaded/total*100)}%`;statusEl.textContent=`Loading campus… ${loaded}/${total}`;};
+const loader=new GLTFLoader(manager);
+loader.setMeshoptDecoder(MeshoptDecoder);
+
+const MODEL_URLS={
+  building:'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2Ff22659026069c24acb008f56ae844f2f24924fcaf7ea32b1bb4026efef4abd7f?filename=building.glb&sig=PFKfzfb2vAjWdtingNlk6EccxAFy9aBDtzWD20eRzDo=&t=o',
+  gate:'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2Feaa69187adf771d78dc82af4aab3071171afad6792eeebfa1a6ff82f43b2152a?filename=gate.glb&sig=N6jpknhAWiwYcfjXo8lK-w83udTNmrXSZ5lCWeHOdiE=&t=o',
+  sign:'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2F303ce6482a987acc5e2ea74b1bf1350ba6994ccb9270b3b541cb6de39398bda9?filename=sign.glb&sig=J9yNjYvLbAMA-UKQ-L2529VYhA_gTv4wOCnXOnRnmcQ=&t=o',
+  tree:'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2Fa7b25106238518ddfa697a9ec637c53120fff43f2976b7de33c285b4f7c67c0d?filename=tree.glb&sig=QQnJ2zvJv_W-dv4ar351vl3BcIBJWluk1wPcwV9zTZA=&t=o',
+  npc_teacher:'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2Fc2b026040eb01254118b68f3003aabb11eb53cbb6d3723281b89a5c1c6eb069c?filename=npc_teacher.glb&sig=TAk0WDl5znzfRfhBFI4KhHgUmv3gZflcXGPnkAHZyxY=&t=o',
+  npc_student:'https://www.kimi.com/apiv2-files/sign-obj/kimi-fs%2Ffiles%2Fblob%2Fb3c3e2dcbec866fc7a28d8ee98b04c5a89376c90e173057d7316de82216f781b?filename=npc_student.glb&sig=yb2RwZqAxrmqHPQmx8bmG9r5N2MN9J96BUfdaghTrdw=&t=o'
+};
+
+function prep(gltf,targetSize){
+  const root=gltf.scene;
+  root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  const box=new THREE.Box3().setFromObject(root);
+  const size=box.getSize(new THREE.Vector3());
+  const s=targetSize/Math.max(size.x,size.y,size.z,1e-6);
+  root.scale.setScalar(s);
+  const box2=new THREE.Box3().setFromObject(root);
+  const c=box2.getCenter(new THREE.Vector3());
+  root.position.sub(new THREE.Vector3(c.x,box2.min.y,c.z));
+  const group=new THREE.Group();
+  group.add(root);
+  return group;
+}
+const load=(u)=>new Promise((res,rej)=>loader.load(u,res,undefined,rej));
+
+const treeSpots=[[-30,0,20],[30,0,20],[-38,0,-8],[38,0,-8],[-22,0,38],[22,0,38],[-46,0,30],[46,0,30],[0,0,-28]];
+
+Promise.all([load(MODEL_URLS.building),load(MODEL_URLS.gate),load(MODEL_URLS.sign),load(MODEL_URLS.tree),load(MODEL_URLS.npc_teacher),load(MODEL_URLS.npc_student)])
+.then(([b,g,s,t,npcT,npcS])=>{
+  const building=prep(b,33);
+  building.position.set(0,0,-8);
+  building.rotation.y=-Math.PI/2;
+  scene.add(building);
+
+  const gate=prep(g,13);
+  gate.position.set(0,0,54);
+  gate.rotation.y=-Math.PI/2;
+  scene.add(gate);
+
+  const sign=prep(s,3.6);
+  sign.position.set(9.5,0,45);
+  sign.rotation.y=-0.35;
+  scene.add(sign);
+
+  const treeProto=prep(t,8.5);
+  for(const [x,,z] of treeSpots){
+    const tree=treeProto.clone();
+    tree.scale.multiplyScalar(0.85+rand()*0.4);
+    tree.position.set(x+(rand()-0.5)*4,0,z+(rand()-0.5)*4);
+    tree.rotation.y=rand()*Math.PI*2;
+    scene.add(tree);
+  }
+
+  const npcs=[];
+  const teacher=prep(npcT,1.85);
+  teacher.position.set(4.8,0,47);
+  teacher.rotation.y=-2.6;
+  scene.add(teacher); npcs.push(teacher);
+
+  const studentSpots=[{pos:[2.6,0,40],rot:0.15},{pos:[-1.8,0,28],rot:-0.1},{pos:[5.5,0,12],rot:-2.6},{pos:[-6.5,0,14],rot:2.4}];
+  for(const spot of studentSpots){
+    const st=prep(npcS,1.6);
+    st.position.set(...spot.pos);
+    st.rotation.y=spot.rot;
+    scene.add(st); npcs.push(st);
+  }
+
+  overlay.style.opacity='0';
+  setTimeout(()=>overlay.remove(),600);
+  draw();
+  window.__SCENE_READY__=true;
+})
+.catch(err=>{statusEl.textContent='Failed to load campus assets.';console.error(err);});
+
+const clouds=new THREE.Group();
+const cloudMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,transparent:true,opacity:0.92});
+for(let i=0;i<7;i++){
+  const cl=new THREE.Group();
+  const puffs=3+Math.floor(rand()*3);
+  for(let p=0;p<puffs;p++){
+    const r=5+rand()*7;
+    const puff=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),cloudMat);
+    puff.position.set((p-puffs/2)*r*1.1,rand()*2,(rand()-0.5)*6);
+    puff.scale.y=0.55;
+    cl.add(puff);
+  }
+  cl.position.set((rand()-0.5)*500,70+rand()*40,(rand()-0.5)*500);
+  cl.userData.speed=0.6+rand()*0.8;
+  clouds.add(cl);
+}
+scene.add(clouds);
+
+const hud=document.getElementById('hud');
+const clock=new THREE.Clock();
+let paused=false,simT=0;
+
+function draw(){
+  controls.update();
+  renderer.render(scene,camera);
+  hud.style.display=paused?'none':'';
+  if(!paused)hud.textContent=`calls ${renderer.info.render.calls} · tris ${renderer.info.render.triangles}`;
+}
+renderer.setAnimationLoop(()=>{
+  const dt=Math.min(clock.getDelta(),0.1);
+  if(!paused){
+    simT+=dt;
+    for(const cl of clouds.children){
+      cl.position.x+=cl.userData.speed*dt;
+      if(cl.position.x>620)cl.position.x=-620;
+    }
+  }
+  draw();
+});
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+  if(paused)draw();
+});
+draw();
+</script>
 </body>
 </html>
