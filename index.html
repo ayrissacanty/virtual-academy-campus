@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Virtual Academy Campus</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#9ec8ee;font-family:Georgia,'Times New Roman',serif}
+  canvas{display:block}
+  #hud{position:fixed;right:12px;bottom:10px;color:#f4f7fa;font:11px/1.5 ui-monospace,monospace;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  #title{position:fixed;left:16px;top:14px;color:#fff;pointer-events:none;text-shadow:0 1px 6px rgba(20,40,70,.55)}
+  #title h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.06em}
+  #title p{margin:2px 0 0;font-size:12px;opacity:.85;font-family:system-ui,sans-serif}
+  #hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);color:#fff;background:rgba(20,35,55,.45);
+        padding:6px 14px;border-radius:20px;font:12px system-ui,sans-serif;pointer-events:none;backdrop-filter:blur(4px)}
+  #overlay{position:fixed;inset:0;background:linear-gradient(#9ec8ee,#dfe9f2);display:flex;flex-direction:column;
+           align-items:center;justify-content:center;gap:14px;transition:opacity .6s;z-index:10}
+  #overlay h2{margin:0;color:#274263;font-size:22px;letter-spacing:.08em}
+  #track{width:220px;height:6px;border-radius:3px;background:rgba(39,66,99,.18);overflow:hidden}
+  #bar{height:100%;width:0%;background:#274263;border-radius:3px;transition:width .3s}
+  #status{color:#3d5a7d;font:12px system-ui,sans-serif}
+</style>
+  <script type="module" crossorigin src="./assets/index-DvKAEO_w.js"></script>
+</head>
+<body>
+<div id="overlay">
+  <h2>VIRTUAL ACADEMY</h2>
+  <div id="track"><div id="bar"></div></div>
+  <div id="status">Loading campus…</div>
+</div>
+<div id="title"><h1>VIRTUAL ACADEMY</h1><p>Campus preview — building · gate · sign · grounds</p></div>
+<div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+<div id="hud"></div>
+</body>
+</html>
